@@ -96,7 +96,7 @@ public class RedisLock {
                 // 维持锁持续时间, 知直到业务逻辑结束
                 keepLockAlived();
 
-                log.info("get lock successfully");
+                log.info("成功获取锁");
                 break;
             }
 
@@ -118,14 +118,14 @@ public class RedisLock {
     public void unlock() {
         // 如果锁不存在
         if (Objects.isNull(this.lockValue)) {
-            throw new RuntimeException("this lock is already unlocked");
+            throw new RuntimeException("锁不存在");
         }
 
         Object oldLockValue = redisTemplate.opsForValue().get(RedisLockConst.LOCK_KEY);
 
         // 锁存在，并且锁是自己的
         if (Objects.nonNull(oldLockValue) && lockValue.equals(oldLockValue.toString())) {
-            log.info("unlock successfully");
+            log.info("解锁成功");
 
             redisTemplate.delete(RedisLockConst.LOCK_KEY);
         }
@@ -140,7 +140,7 @@ public class RedisLock {
         threadPoolTaskExecutor.execute(() -> {
             while (true) {
                 if (Objects.isNull(lockValue)) {
-                    throw new RuntimeException("lock value is not set");
+                    throw new RuntimeException("锁不存在");
                 }
 
                 // 锁失效活着不是自己的锁
@@ -148,8 +148,6 @@ public class RedisLock {
                 if (Objects.isNull(lockValueObj) || !lockValueObj.toString().equals(lockValue)) {
                     break;
                 }
-
-                log.info("expire time");
 
                 // 进行时间的更新
                 redisTemplate.expire(RedisLockConst.LOCK_KEY, expireTime, timeUnit);
